@@ -6,7 +6,7 @@ namespace JulaFintech
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             DateTime since = new DateTime(2016, 5, 1, 0, 00, 00);
             DateTime to = new DateTime(2016, 6, 1, 0, 00, 00);

@@ -2,50 +2,45 @@
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
-using System.Text.Json;
+using Newtonsoft.Json;
 
 namespace JulaFintech
 {
     class TradeSet
     {
-        public IEnumerable<Trade> trades { get; }
-        public DateTime since { get; }
-        public DateTime to { get; }
+        public IEnumerable<Trade> Trades { get; }
+        public DateTime Since { get; }
+        public DateTime To { get; }
 
         public TradeSet(DateTime since, DateTime to)
         {
-            this.since = since;
-            this.to = to;
-            this.trades = GetTradesEnum(since, to);
+            this.Since = since;
+            this.To = to;
+            this.Trades = GetTradesEnum(since, to);
         }
 
         public IEnumerable<Trade> GetPeaks(double percent, double timeHours)
         {
             var filteredTrades =
-                from trade in trades
-                where trades.Any(t =>
-                            trade.date - t.date >= 0
-                            && trade.date - t.date <= timeHours * 3600
-                            && trade.price - t.price >= percent / 100 * t.price)
+                from trade in Trades
+                .Where(t => t.IsPeak(percent, timeHours))
                 select trade;
             return filteredTrades;
         }
+
         public IEnumerable<Trade> GetValleys(double percent, double timeHours)
         {
             var filteredTrades =
-                from trade in trades
-                where trades.Any(t =>
-                            trade.date - t.date >= 0
-                            && trade.date - t.date <= timeHours * 3600
-                            && trade.price - t.price <= -percent / 100 * t.price)
+                from trade in Trades
+                .Where(t => t.IsValley(percent, timeHours))
                 select trade;
             return filteredTrades;
         }
         public int[] GetMaxMonth()
         {
-            var grouped = trades.ToLookup(t => new DateTime(
-                DateTimeOffset.FromUnixTimeSeconds(t.date).Year,
-                DateTimeOffset.FromUnixTimeSeconds(t.date).Month,
+            var grouped = Trades.ToLookup(t => new DateTime(
+                DateTimeOffset.FromUnixTimeSeconds(t.Date).Year,
+                DateTimeOffset.FromUnixTimeSeconds(t.Date).Month,
                 1));
             var maxGroup = grouped.Aggregate((grp, maxSoFar)
                 => maxSoFar == null || grp.Count() > maxSoFar.Count() ? grp : maxSoFar);
@@ -53,9 +48,9 @@ namespace JulaFintech
         }
         public int[] GetMinMonth()
         {
-            var grouped = trades.ToLookup(t => new DateTime(
-                DateTimeOffset.FromUnixTimeSeconds(t.date).Year,
-                DateTimeOffset.FromUnixTimeSeconds(t.date).Month,
+            var grouped = Trades.ToLookup(t => new DateTime(
+                DateTimeOffset.FromUnixTimeSeconds(t.Date).Year,
+                DateTimeOffset.FromUnixTimeSeconds(t.Date).Month,
                 1));
             var minGroup = grouped.Aggregate((grp, minSoFar)
                 => minSoFar == null || grp.Count() < minSoFar.Count() ? grp : minSoFar);
@@ -84,8 +79,8 @@ namespace JulaFintech
                 foreach (string singleJson in split_jsonString)
                 {
                     string Json = $"{{{singleJson}}}";
-                    Trade trade = JsonSerializer.Deserialize<Trade>(Json);
-                    if (since_unix <= trade.date && trade.date <= to_unix)
+                    Trade trade = JsonConvert.DeserializeObject<Trade>(Json);
+                    if (since_unix <= trade.Date && trade.Date <= to_unix)
                     {
                         yield return trade;
                     }
