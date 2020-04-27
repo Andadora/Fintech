@@ -83,9 +83,12 @@ namespace JulaFintech
             var to_int = int.Parse(to.ToString("yyyyMMdd"));
 
             var paths = Directory.EnumerateFiles(data_directory, "BTCPLN*.json");
-            var filteredpaths = paths.Where(p => 
-                int.Parse(p.Split('_')[2]) >= since_int 
-                && int.Parse(p.Split('_')[1]) <= to_int);
+            var filteredpaths = paths.Where(p =>
+                {
+                    var s = p.Split('_');
+                    return int.Parse(s[s.Length - 2]) >= since_int && int.Parse(s[s.Length - 3]) <= to_int;
+                });
+
             foreach (string path in filteredpaths)
             {
                 string jsonString = File.ReadAllText(path);
