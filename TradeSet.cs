@@ -21,18 +21,36 @@ namespace JulaFintech
 
         public IEnumerable<Trade> GetPeaks(double percent, double timeHours)
         {
+            long lastPeakDate = 0;
             var filteredTrades =
                 from trade in Trades
-                .Where(t => t.IsPeak(percent, timeHours))
+                .Where(t =>
+                {
+                    if (t.IsPeak(percent, timeHours, lastPeakDate))
+                    {
+                        lastPeakDate = t.Date;
+                        return true;
+                    }
+                    return false;
+                })
                 select trade;
             return filteredTrades;
         }
 
         public IEnumerable<Trade> GetValleys(double percent, double timeHours)
         {
+            long lastValleyDate = 0;
             var filteredTrades =
                 from trade in Trades
-                .Where(t => t.IsValley(percent, timeHours))
+                .Where(t => 
+                    {
+                        if (t.IsValley(percent, timeHours, lastValleyDate))
+                        {
+                            lastValleyDate = t.Date;
+                            return true;
+                        }
+                        return false;
+                    })
                 select trade;
             return filteredTrades;
         }
