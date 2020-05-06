@@ -14,12 +14,7 @@ namespace JulaFintech
             DateTime since = new DateTime(2016, 5, 1, 0, 00, 00);
             DateTime to = new DateTime(2017, 5, 1, 0, 00, 00);
             var TradesEnum = GetTradesEnum(since, to);
-            var TradesList = TradesEnum.ToList();
-            var maxMonth = GetMaxMonth(TradesList);
-            Console.WriteLine($"MaxMonth: {maxMonth[0]}.{maxMonth[1]} : {maxMonth[2]}");
-            var minMonth = GetMinMonth(TradesList);
-            Console.WriteLine($"MinMonth: {minMonth[0]}.{minMonth[1]} : {minMonth[2]}");
-            foreach (Trade trade in GetRisingSlopesEnum(TradesList, 10, TimeSpan.FromHours(1)))
+            foreach (Trade trade in GetFallingSlopesEnum(TradesEnum, 10, TimeSpan.FromHours(1)))
             {
                 Console.WriteLine(trade);
             }
@@ -52,13 +47,13 @@ namespace JulaFintech
                 }
             }
         }
-        public static IEnumerable<Trade> GetRisingSlopesEnum(List<Trade> trades, double percent, TimeSpan timeSpan)
+        public static IEnumerable<Trade> GetRisingSlopesEnum(IEnumerable<Trade> trades, double percent, TimeSpan timeSpan)
         {
-            var tradeSet = new TradeSet(timeSpan);
+            var tradeSet = new TradeSetDropWatcher(timeSpan, percent);
             foreach(Trade trade in trades)
             {
                 tradeSet.AddTrade(trade);
-                if(trade.IsRisingSlope(percent, tradeSet))
+                if(trade.IsRisingSlope(tradeSet))
                 {
                     tradeSet.ClearSet();
                     yield return trade;
@@ -66,13 +61,13 @@ namespace JulaFintech
             }
         }
 
-        public static IEnumerable<Trade> GetFallingSlopesEnum(List<Trade> trades, double percent, TimeSpan timeSpan)
+        public static IEnumerable<Trade> GetFallingSlopesEnum(IEnumerable<Trade> trades, double percent, TimeSpan timeSpan)
         {
-            var tradeSet = new TradeSet(timeSpan);
+            var tradeSet = new TradeSetDropWatcher(timeSpan, percent);
             foreach (Trade trade in trades)
             {
                 tradeSet.AddTrade(trade);
-                if (trade.IsFallingSlope(percent, tradeSet))
+                if (trade.IsFallingSlope(tradeSet))
                 {
                     tradeSet.ClearSet();
                     yield return trade;

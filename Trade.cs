@@ -15,13 +15,13 @@ namespace JulaFintech
         {
             return $"TradeID: {Tid}, Amount: {Amount}, Date: {Date}, Price: {Price}, Type: {Type}";
         }
-        public bool IsRisingSlope(double percent, TradeSet tradeSet)
+        public bool IsRisingSlope(TradeSetDropWatcher tradeSet)
         {
-            return tradeSet.TradesList.Any(t => Price - t.Price >= percent / 100 * t.Price);
+            return tradeSet.TradesList.Any(t => Price - t.Price >= tradeSet.ProcentDivHundred * t.Price);
         }
-        public bool IsFallingSlope(double percent, TradeSet tradeSet)
+        public bool IsFallingSlope(TradeSetDropWatcher tradeSet)
         {
-            return tradeSet.TradesList.Any(t => Price - t.Price <= - percent / 100 * t.Price);
+            return tradeSet.TradesList.Any(t => Price - t.Price <= - tradeSet.ProcentDivHundred * t.Price);
         }
     }
 }

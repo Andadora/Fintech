@@ -6,15 +6,17 @@ using Newtonsoft.Json;
 
 namespace JulaFintech
 {
-    class TradeSet
+    class TradeSetDropWatcher
     {
+        public double ProcentDivHundred { get; set; }
         public List<Trade> TradesList { get; private set; }
         public TimeSpan TimeSpan { get; set; }
 
-        public TradeSet(TimeSpan timeSpan)
+        public TradeSetDropWatcher(TimeSpan timeSpan, double procent)
         {
             TradesList = new List<Trade>();
             TimeSpan = timeSpan;
+            ProcentDivHundred = procent / 100;
         }
         public void AddTrade(Trade trade)
         {
