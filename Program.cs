@@ -11,15 +11,113 @@ namespace JulaFintech
         public static string data_directory = @"D:\studia\NETiJava\Fintech\DATA\BitBay";
         static void Main()
         {
-            DateTime since = new DateTime(2016, 5, 1, 0, 00, 00);
-            DateTime to = new DateTime(2017, 5, 1, 0, 00, 00);
+            DateTime since = new DateTime(2016, 1, 1, 0, 00, 00);
+            DateTime to = new DateTime(2017, 1, 1, 0, 00, 00);
             var TradesEnum = GetTradesEnum(since, to);
-            foreach (Trade trade in GetFallingSlopesEnum(TradesEnum, 10, TimeSpan.FromHours(1)))
+            RunStrategy(TradesEnum,
+                        10,
+                        TimeSpan.FromHours(1),
+                        30,
+                        30);
+        }
+        public static void RunStrategy(
+            IEnumerable<Trade> trades, 
+            double buyPercent, 
+            TimeSpan timeSpan, 
+            double takeProfitPercent,
+            double stopLossPercent)
+        {
+            var TradeSet = new TradeSetDropWatcher(timeSpan, buyPercent);
+            var BuyTradesList = new List<Trade>();
+            var toDelete = new List<Trade>();
+            double budget = 100.0;
+            double profit = 0;
+            double currentPrice = 0;
+            Console.WriteLine($"|Action:                " + 
+                              $"|Date:               " +
+                              $"|Type: " +
+                              $"|Price: " +
+                              $"|Amount: " +
+                              $"|Profit:   " +
+                              $"|Total profit: |");
+            foreach (Trade trade in trades)
             {
-                Console.WriteLine(trade);
+                foreach(Trade buyTrade in BuyTradesList)
+                {
+                    if(trade.Price - buyTrade.Price > buyTrade.Price * takeProfitPercent / 100)
+                    {
+                        profit += trade.Price * buyTrade.Amount;
+                        Console.WriteLine($"|Selling at {takeProfitPercent}% rise    " +
+                                          $"|{DateTimeOffset.FromUnixTimeSeconds(trade.Date).UtcDateTime} " +
+                                          $"|sell  " +
+                                          $"|{trade.Price,-7}" +
+                                          $"|{Math.Round(buyTrade.Amount, 4)}  " +
+                                          $"|{Math.Round(((trade.Price - buyTrade.Price) * buyTrade.Amount),4),-10}" +
+                                          $"|{Math.Round(profit, 4), -10}    |");
+                        toDelete.Add(buyTrade);
+                    }
+                    if (buyTrade.Price - trade.Price > buyTrade.Price * stopLossPercent / 100)
+                    {
+                        profit += trade.Price * buyTrade.Amount;
+                        Console.WriteLine($"|Stop loss at {stopLossPercent}% drop     " +
+                                          $"|{DateTimeOffset.FromUnixTimeSeconds(trade.Date).UtcDateTime} " +
+                                          $"|sell  " +
+                                          $"|{trade.Price,-7}" +
+                                          $"|{Math.Round(buyTrade.Amount, 4)}  " +
+                                          $"|{Math.Round(((trade.Price - buyTrade.Price) * buyTrade.Amount), 4),-10}" +
+                                          $"|{Math.Round(profit, 4),-10}    |");
+                        toDelete.Add(buyTrade);
+                    }
+                }
+                foreach (Trade tradeToDelete in toDelete)
+                {
+                    BuyTradesList.Remove(tradeToDelete);
+                }
+                TradeSet.AddTrade(trade);
+                if (trade.IsFallingSlope(TradeSet))
+                {
+                    TradeSet.ClearSet();
+                    var buyTrade = new Trade(budget / trade.Price, trade.Date, trade.Price, "buy");
+                    BuyTradesList.Add(buyTrade);
+                    profit -= budget;
+                    Console.WriteLine($"|Buying at {buyPercent}% drop     " +
+                                      $"|{DateTimeOffset.FromUnixTimeSeconds(trade.Date).UtcDateTime} " +
+                                      $"|buy   " +
+                                      $"|{trade.Price,-7}" +
+                                      $"|{Math.Round(buyTrade.Amount, 4)}  " +
+                                      $"|{Math.Round(-budget, 4),-10}" +
+                                      $"|{Math.Round(profit, 4),-10}    |");
+                }
+                toDelete.Clear();
+            }
+            if (BuyTradesList.Count() != 0)
+            {
+                var last = trades.Last();
+                foreach (Trade buyTrade in BuyTradesList)
+                {
+                    profit += currentPrice * buyTrade.Amount;
+                    Console.WriteLine($"|Selling remaining trade" +
+                                      $"|{DateTimeOffset.FromUnixTimeSeconds(last.Date).UtcDateTime}" +
+                                      $"|{last.Price,-7}" +
+                                      $"|{Math.Round(buyTrade.Amount, 4)}  " +
+                                      $"|{Math.Round(((last.Price - buyTrade.Price) * buyTrade.Amount), 4),-10}" +
+                                      $"|{Math.Round(profit, 4),-10}    |");
+                }
             }
         }
-
+        public static IEnumerable<Trade> GetFallingSlopesEnum(IEnumerable<Trade> trades, double percent, TimeSpan timeSpan)
+        {
+            var tradeSet = new TradeSetDropWatcher(timeSpan, percent);
+            foreach (Trade trade in trades)
+            {
+                tradeSet.AddTrade(trade);
+                if (trade.IsFallingSlope(tradeSet))
+                {
+                    tradeSet.ClearSet();
+                    yield return trade;
+                }
+            }
+        }
         public static IEnumerable<Trade> GetTradesEnum(DateTime since, DateTime to)
         {
             var since_unix = (long)(since.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
@@ -44,33 +142,6 @@ namespace JulaFintech
                     {
                         yield return trade;
                     }
-                }
-            }
-        }
-        public static IEnumerable<Trade> GetRisingSlopesEnum(IEnumerable<Trade> trades, double percent, TimeSpan timeSpan)
-        {
-            var tradeSet = new TradeSetDropWatcher(timeSpan, percent);
-            foreach(Trade trade in trades)
-            {
-                tradeSet.AddTrade(trade);
-                if(trade.IsRisingSlope(tradeSet))
-                {
-                    tradeSet.ClearSet();
-                    yield return trade;
-                }
-            }
-        }
-
-        public static IEnumerable<Trade> GetFallingSlopesEnum(IEnumerable<Trade> trades, double percent, TimeSpan timeSpan)
-        {
-            var tradeSet = new TradeSetDropWatcher(timeSpan, percent);
-            foreach (Trade trade in trades)
-            {
-                tradeSet.AddTrade(trade);
-                if (trade.IsFallingSlope(tradeSet))
-                {
-                    tradeSet.ClearSet();
-                    yield return trade;
                 }
             }
         }

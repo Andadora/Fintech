@@ -11,9 +11,16 @@ namespace JulaFintech
         public long Tid { get; set; }
         public string Type { get; set; }
 
+        public Trade(double Amount, long Date, double Price, string Type)
+        {
+            this.Amount = Amount;
+            this.Date = Date;
+            this.Price = Price;
+            this.Type = Type;
+        }
         public override string ToString() 
         {
-            return $"TradeID: {Tid}, Amount: {Amount}, Date: {Date}, Price: {Price}, Type: {Type}";
+            return $"TradeID: {Tid}, Amount: {Amount}, Date: {DateTimeOffset.FromUnixTimeSeconds(Date).UtcDateTime}, Price: {Price}, Type: {Type}";
         }
         public bool IsRisingSlope(TradeSetDropWatcher tradeSet)
         {
