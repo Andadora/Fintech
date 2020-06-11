@@ -32,13 +32,13 @@ namespace JulaFintech
             var toDelete = new List<Trade>();
             double budget = 100.0;
             double profit = 0;
-            double currentPrice = 0;
+            var currentTrade = new Trade(0, 0, 0, "");
             Console.WriteLine($"|Action:                " + 
                               $"|Date:               " +
                               $"|Type: " +
                               $"|Price: " +
                               $"|Amount: " +
-                              $"|Profit:   " +
+                              $"|Profit/loss: " +
                               $"|Total profit: |");
             foreach (Trade trade in trades)
             {
@@ -51,8 +51,8 @@ namespace JulaFintech
                                           $"|{DateTimeOffset.FromUnixTimeSeconds(trade.Date).UtcDateTime} " +
                                           $"|sell  " +
                                           $"|{trade.Price,-7}" +
-                                          $"|{Math.Round(buyTrade.Amount, 4)}  " +
-                                          $"|{Math.Round(((trade.Price - buyTrade.Price) * buyTrade.Amount),4),-10}" +
+                                          $"|{Math.Round(buyTrade.Amount, 4),-8}" +
+                                          $"|{Math.Round(currentTrade.Price * buyTrade.Amount, 4),-13}" +
                                           $"|{Math.Round(profit, 4), -10}    |");
                         toDelete.Add(buyTrade);
                     }
@@ -63,8 +63,8 @@ namespace JulaFintech
                                           $"|{DateTimeOffset.FromUnixTimeSeconds(trade.Date).UtcDateTime} " +
                                           $"|sell  " +
                                           $"|{trade.Price,-7}" +
-                                          $"|{Math.Round(buyTrade.Amount, 4)}  " +
-                                          $"|{Math.Round(((trade.Price - buyTrade.Price) * buyTrade.Amount), 4),-10}" +
+                                          $"|{Math.Round(buyTrade.Amount, 4),-8}" +
+                                          $"|{Math.Round(currentTrade.Price * buyTrade.Amount, 4),-13}" +
                                           $"|{Math.Round(profit, 4),-10}    |");
                         toDelete.Add(buyTrade);
                     }
@@ -84,26 +84,30 @@ namespace JulaFintech
                                       $"|{DateTimeOffset.FromUnixTimeSeconds(trade.Date).UtcDateTime} " +
                                       $"|buy   " +
                                       $"|{trade.Price,-7}" +
-                                      $"|{Math.Round(buyTrade.Amount, 4)}  " +
-                                      $"|{Math.Round(-budget, 4),-10}" +
+                                      $"|{Math.Round(buyTrade.Amount, 4),-8}" +
+                                      $"|{Math.Round(-budget, 4),-13}" +
                                       $"|{Math.Round(profit, 4),-10}    |");
                 }
                 toDelete.Clear();
+                currentTrade = trade;
             }
             if (BuyTradesList.Count() != 0)
             {
-                var last = trades.Last();
                 foreach (Trade buyTrade in BuyTradesList)
                 {
-                    profit += currentPrice * buyTrade.Amount;
+                    profit += currentTrade.Price * buyTrade.Amount;
                     Console.WriteLine($"|Selling remaining trade" +
-                                      $"|{DateTimeOffset.FromUnixTimeSeconds(last.Date).UtcDateTime}" +
-                                      $"|{last.Price,-7}" +
-                                      $"|{Math.Round(buyTrade.Amount, 4)}  " +
-                                      $"|{Math.Round(((last.Price - buyTrade.Price) * buyTrade.Amount), 4),-10}" +
+                                      $"|{DateTimeOffset.FromUnixTimeSeconds(currentTrade.Date).UtcDateTime} " +
+                                      $"|sell  " +
+                                      $"|{currentTrade.Price,-7}" +
+                                      $"|{Math.Round(buyTrade.Amount, 4),-8}" +
+                                      $"|{Math.Round(currentTrade.Price * buyTrade.Amount, 4),-13}" +
                                       $"|{Math.Round(profit, 4),-10}    |");
                 }
             }
+            Console.WriteLine($"Total profit of strategy {profit}");
+            Console.Write("Press any key to exit");
+            var _ = Console.ReadLine();
         }
         public static IEnumerable<Trade> GetFallingSlopesEnum(IEnumerable<Trade> trades, double percent, TimeSpan timeSpan)
         {
