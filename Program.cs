@@ -52,7 +52,7 @@ namespace JulaFintech
                                           $"|sell  " +
                                           $"|{trade.Price,-7}" +
                                           $"|{Math.Round(buyTrade.Amount, 4),-8}" +
-                                          $"|{Math.Round(currentTrade.Price * buyTrade.Amount, 4),-13}" +
+                                          $"|{Math.Round(trade.Price * buyTrade.Amount, 4),-13}" +
                                           $"|{Math.Round(profit, 4), -10}    |");
                         toDelete.Add(buyTrade);
                     }
@@ -64,7 +64,7 @@ namespace JulaFintech
                                           $"|sell  " +
                                           $"|{trade.Price,-7}" +
                                           $"|{Math.Round(buyTrade.Amount, 4),-8}" +
-                                          $"|{Math.Round(currentTrade.Price * buyTrade.Amount, 4),-13}" +
+                                          $"|{Math.Round(trade.Price * buyTrade.Amount, 4),-13}" +
                                           $"|{Math.Round(profit, 4),-10}    |");
                         toDelete.Add(buyTrade);
                     }
@@ -106,7 +106,7 @@ namespace JulaFintech
                 }
             }
             Console.WriteLine($"Total profit of strategy {profit}");
-            Console.Write("Press any key to exit");
+            Console.Write("Press enter to exit");
             var _ = Console.ReadLine();
         }
         public static IEnumerable<Trade> GetFallingSlopesEnum(IEnumerable<Trade> trades, double percent, TimeSpan timeSpan)
